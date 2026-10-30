@@ -119,6 +119,15 @@ func (c *OrganizerConfig) Validate() error {
 		)
 	}
 
+	switch c.FieldMapping.SeriesOrder {
+	case "", SeriesOrderAlphabetical, SeriesOrderSource:
+	default:
+		return fmt.Errorf(
+			"invalid series order: %s\n\nValid options are:\n  alphabetical (default)\n  source",
+			c.FieldMapping.SeriesOrder,
+		)
+	}
+
 	// Validate replace_space character (should be single char or empty)
 	if len(c.ReplaceSpace) > 1 {
 		return fmt.Errorf(

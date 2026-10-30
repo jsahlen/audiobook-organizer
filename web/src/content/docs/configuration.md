@@ -130,6 +130,7 @@ EOF
 |--------|------|---------|-------------|
 | `author-fields` | string | `authors` | Comma-separated fields to try for author (priority order) |
 | `series-field` | string | `series` | Field to use for series |
+| `series-order` | string | `alphabetical` | Which series to use when a book has several: `alphabetical` or `source` (first listed) |
 | `title-field` | string | `title` | Field to use for title |
 | `track-field` | string | `track` | Field to use for track number |
 
@@ -209,6 +210,7 @@ export AO_PROMPT=false
 ```bash
 export AO_AUTHOR_FIELDS="authors,narrators,album_artist,artist"
 export AO_SERIES_FIELD="series"
+export AO_SERIES_ORDER="alphabetical"
 export AO_TITLE_FIELD="album,title"
 export AO_TRACK_FIELD="track,track_number"
 ```

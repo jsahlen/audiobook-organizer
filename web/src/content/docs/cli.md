@@ -159,6 +159,7 @@ audiobook-organizer rename --dir=/path --undo
 | `--layout-template` | - | (none) | Custom directory layout template that overrides `--layout` |
 | `--author-fields` | - | `authors` | Comma-separated fields to try for author |
 | `--series-field` | - | `series` | Field to use as series |
+| `--series-order` | - | `alphabetical` | Which series to use when a book has several: `alphabetical` or `source` (first listed) |
 | `--title-field` | - | `title` | Field to use as title |
 | `--track-field` | - | `track` | Field to use for track number |
 | `--disc-field` | - | `disc` | Field to use for disc number (e.g., `disc`, `discnumber`, `disk`, `tpos`) |
@@ -287,6 +288,7 @@ audiobook-organizer \
 | `--author-fields` | `authors` | Comma-separated fields to try for author |
 | `--title-field` | `title` | Field to use as title |
 | `--series-field` | `series` | Field to use as series |
+| `--series-order` | `alphabetical` | Which series to use when a book has several: `alphabetical` or `source` (first listed) |
 | `--track-field` | `track` | Field to use for track number |
 | `--disc-field` | `disc` | Field to use for disc number (e.g., `disc`, `discnumber`, `tpos`) |
 
@@ -417,6 +419,13 @@ Single field to use for series information:
 --series-field="album"   # Use album tag as series
 ```
 
+When a book belongs to several series, the alphabetically first one is used by default. Use `--series-order=source` to use the first series as listed in the metadata instead (for example the order Audiobookshelf writes to `metadata.json`):
+
+```bash
+--series-order="alphabetical"  # Alphabetically first series (default)
+--series-order="source"        # First series as listed in the metadata
+```
+
 ### Track Field
 
 Single field to use for track numbers:
@@ -474,6 +483,7 @@ export AO_USE_EMBEDDED_METADATA=true
 export AO_LAYOUT="author-series-title"
 export AO_AUTHOR_FIELDS="authors,narrators,album_artist,artist"
 export AO_SERIES_FIELD="series"
+export AO_SERIES_ORDER="alphabetical"
 export AO_TITLE_FIELD="album,title"
 export AO_TRACK_FIELD="track,track_number"
 
