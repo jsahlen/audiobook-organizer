@@ -129,6 +129,7 @@ func runRename() {
 		FieldMapping: organizer.FieldMapping{
 			TitleField:   viper.GetString("title-field"),
 			SeriesField:  viper.GetString("series-field"),
+			SeriesOrder:  viper.GetString("series-order"),
 			AuthorFields: authorFieldsList,
 			TrackField:   viper.GetString("track-field"),
 			DiscField:    viper.GetString("disc-field"),

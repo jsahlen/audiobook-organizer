@@ -15,6 +15,7 @@ import (
 const ( // This makes sonar pass
 	titleFieldKey      = "title-field"
 	seriesFieldKey     = "series-field"
+	seriesOrderKey     = "series-order"
 	authorFieldsKey    = "author-fields"
 	trackFieldKey      = "track-field"
 	discFieldKey       = "disc-field"
@@ -41,6 +42,7 @@ var (
 	// Field mapping flags
 	titleField   string
 	seriesField  string
+	seriesOrder  string
 	authorFields string // Comma-separated list
 	trackField   string
 	discField    string
@@ -88,6 +90,7 @@ var envAliases = map[string][]string{
 	// Field mapping environment variables
 	titleFieldKey:   {"AO_TITLE_FIELD", "AUDIOBOOK_ORGANIZER_TITLE_FIELD"},
 	seriesFieldKey:  {"AO_SERIES_FIELD", "AUDIOBOOK_ORGANIZER_SERIES_FIELD"},
+	seriesOrderKey:  {"AO_SERIES_ORDER", "AUDIOBOOK_ORGANIZER_SERIES_ORDER"},
 	authorFieldsKey: {"AO_AUTHOR_FIELDS", "AUDIOBOOK_ORGANIZER_AUTHOR_FIELDS"},
 	trackFieldKey:   {"AO_TRACK_FIELD", "AUDIOBOOK_ORGANIZER_TRACK_FIELD"},
 	discFieldKey:    {"AO_DISC_FIELD", "AUDIOBOOK_ORGANIZER_DISC_FIELD"},
@@ -166,6 +169,7 @@ var rootCmd = &cobra.Command{
 				FieldMapping: organizer.FieldMapping{
 					TitleField:   viper.GetString(titleFieldKey),
 					SeriesField:  viper.GetString(seriesFieldKey),
+					SeriesOrder:  viper.GetString(seriesOrderKey),
 					AuthorFields: authorFieldsList,
 					TrackField:   viper.GetString(trackFieldKey),
 					DiscField:    viper.GetString(discFieldKey),
@@ -286,6 +290,8 @@ func init() {
 	rootCmd.PersistentFlags().
 		StringVar(&seriesField, seriesFieldKey, "", "Field to use as series (e.g., 'series', 'album')")
 	rootCmd.PersistentFlags().
+		StringVar(&seriesOrder, seriesOrderKey, "", "Which series to use when a book has several: 'alphabetical' (default) or 'source' (first listed)")
+	rootCmd.PersistentFlags().
 		StringVar(&authorFields, authorFieldsKey, "", "Comma-separated list of fields to try for author (e.g., 'authors,narrators,album_artist,artist')")
 	rootCmd.PersistentFlags().
 		StringVar(&trackField, trackFieldKey, "", "Field to use for track number (e.g., 'track', 'track_number', 'trck', 'trk')")
@@ -304,6 +310,7 @@ func init() {
 	viper.BindPFlag("skip-errors", rootCmd.PersistentFlags().Lookup("skip-errors"))
 	viper.BindPFlag(titleFieldKey, rootCmd.PersistentFlags().Lookup(titleFieldKey))
 	viper.BindPFlag(seriesFieldKey, rootCmd.PersistentFlags().Lookup(seriesFieldKey))
+	viper.BindPFlag(seriesOrderKey, rootCmd.PersistentFlags().Lookup(seriesOrderKey))
 	viper.BindPFlag(authorFieldsKey, rootCmd.PersistentFlags().Lookup(authorFieldsKey))
 	viper.BindPFlag(trackFieldKey, rootCmd.PersistentFlags().Lookup(trackFieldKey))
 	viper.BindPFlag(discFieldKey, rootCmd.PersistentFlags().Lookup(discFieldKey))

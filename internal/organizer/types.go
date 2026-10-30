@@ -9,10 +9,17 @@ import (
 	"time"
 )
 
+// Series order values for FieldMapping.SeriesOrder
+const (
+	SeriesOrderAlphabetical = "alphabetical"
+	SeriesOrderSource       = "source"
+)
+
 // FieldMapping defines how fields map to our final fields
 type FieldMapping struct {
 	TitleField   string   `json:"title_field,omitempty"`   // "title", "album", "series"
 	SeriesField  string   `json:"series_field,omitempty"`  // "series", "album"
+	SeriesOrder  string   `json:"series_order,omitempty"`  // "alphabetical" (default), "source"
 	AuthorFields []string `json:"author_fields,omitempty"` // ["artist", "album_artist"] or ["authors"]
 	TrackField   string   `json:"track_field,omitempty"`   // "track", "track_number", "trck", "trk"
 	DiscField    string   `json:"disc_field,omitempty"`    // "disc", "discnumber", "disk", "tpos"
@@ -20,7 +27,8 @@ type FieldMapping struct {
 
 // IsEmpty returns true if the field mapping is empty
 func (fm FieldMapping) IsEmpty() bool {
-	return fm.TitleField == "" && fm.SeriesField == "" && len(fm.AuthorFields) == 0 &&
+	return fm.TitleField == "" && fm.SeriesField == "" && fm.SeriesOrder == "" &&
+		len(fm.AuthorFields) == 0 &&
 		fm.TrackField == "" &&
 		fm.DiscField == ""
 }
@@ -93,10 +101,13 @@ func (m *Metadata) GetFirstAuthor(defaultValue string) string {
 	return defaultValue
 }
 
-// GetFullValidSeries returns the first valid series name with series number intact
-// Sorts the series array to ensure consistent series choice
+// GetFullValidSeries returns the first valid series name with series number intact.
+// Sorts the series array to ensure consistent series choice, unless the field
+// mapping asks to keep the order from the metadata source.
 func (m *Metadata) GetFullValidSeries() string {
-	sort.Strings(m.Series)
+	if m.fieldMapping.SeriesOrder != SeriesOrderSource {
+		sort.Strings(m.Series)
+	}
 	if len(m.Series) > 0 && m.Series[0] != "" && m.Series[0] != InvalidSeriesValue {
 		return m.Series[0]
 	}
