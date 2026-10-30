@@ -807,6 +807,16 @@ func (o *Organizer) updateLogAndCleanup(sourcePath, targetPath string, fileNames
 	if err := o.saveLog(); err != nil {
 		// Do not strand completed moves without durable recovery history.
 		entry := &o.logEntries[len(o.logEntries)-1]
+		if _, statErr := os.Lstat(sourcePath); os.IsNotExist(statErr) {
+			// The whole directory was renamed by moveDirectory.
+			if rollbackErr := os.Rename(targetPath, sourcePath); rollbackErr != nil {
+				return errors.Join(
+					err,
+					fmt.Errorf("rollback %s to %s failed: %w", targetPath, sourcePath, rollbackErr),
+				)
+			}
+			entry.Files = nil
+		}
 		for i := len(entry.Files) - 1; i >= 0; i-- {
 			file := entry.Files[i]
 			from, to := filepath.Join(targetPath, file.To), filepath.Join(sourcePath, file.From)
@@ -1002,14 +1012,17 @@ func (o *Organizer) moveFiles(
 		dirMetadata = o.getDirectoryMetadata(sourcePath)
 	}
 	planned := make(map[string]bool)
+	movableAsDirectory := len(entries) > 0
 	for _, entry := range entries {
 		if entry.IsDir() {
+			movableAsDirectory = false
 			continue
 		}
-		target := filepath.Join(
-			targetPath,
-			o.calculateFileTargetName(sourcePath, entry.Name(), dirMetadata),
-		)
+		targetName := o.calculateFileTargetName(sourcePath, entry.Name(), dirMetadata)
+		if targetName != entry.Name() {
+			movableAsDirectory = false
+		}
+		target := filepath.Join(targetPath, targetName)
 		if err := o.validateDestination(target); err != nil {
 			return nil, err
 		}
@@ -1021,6 +1034,21 @@ func (o *Organizer) moveFiles(
 		}
 		planned[target] = true
 	}
+	if movableAsDirectory && o.moveDirectory(sourcePath, targetPath) {
+		files := make([]FilePair, 0, len(entries))
+		for _, entry := range entries {
+			if o.config.Verbose {
+				fmt.Println(o.formatFileMove(
+					filepath.Join(sourcePath, entry.Name()),
+					filepath.Join(targetPath, entry.Name()),
+					false,
+				))
+			}
+			files = append(files, FilePair{From: entry.Name(), To: entry.Name()})
+		}
+		o.summary.Moves = append(o.summary.Moves, MoveSummary{From: sourcePath, To: targetPath})
+		return files, nil
+	}
 	if err := o.fileOps.CreateDirIfNotExists(targetPath); err != nil {
 		return nil, err
 	}
@@ -1029,6 +1057,30 @@ func (o *Organizer) moveFiles(
 		o.summary.Moves = append(o.summary.Moves, MoveSummary{From: sourcePath, To: targetPath})
 	}
 	return files, err
+}
+
+// moveDirectory renames the whole book directory to targetPath, and reports
+// whether it did. Unlike moving files one by one, this keeps the directory's
+// inode, which Audiobookshelf uses to recognize moved library items.
+func (o *Organizer) moveDirectory(sourcePath, targetPath string) bool {
+	if o.config.DryRun {
+		return false
+	}
+	for _, root := range []string{o.config.BaseDir, o.config.OutputDir} {
+		if root != "" && filepath.Clean(root) == filepath.Clean(sourcePath) {
+			return false
+		}
+	}
+	if isSubPathOf(sourcePath, targetPath) {
+		return false
+	}
+	if _, err := os.Lstat(targetPath); !os.IsNotExist(err) {
+		return false
+	}
+	if err := o.fileOps.CreateDirIfNotExists(filepath.Dir(targetPath)); err != nil {
+		return false
+	}
+	return os.Rename(sourcePath, targetPath) == nil
 }
 
 // getDirectoryMetadata attempts to load metadata from a metadata.json file in the directory.
